@@ -1,0 +1,37 @@
+name: Update AliExpress Products
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # כל 6 שעות
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run updater
+        env:
+          ALI_APP_KEY: ${{ secrets.ALI_APP_KEY }}
+          ALI_APP_SECRET: ${{ secrets.ALI_APP_SECRET }}
+        run: python update_products.py
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "AliExpress Bot"
+          git config --global user.email "bot@github.com"
+          git add products.csv || true
+          git commit -m "Auto update products" || echo "No changes to commit"
+          git push || echo "Push failed or no permissions"
